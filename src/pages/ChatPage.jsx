@@ -1,32 +1,55 @@
-import React, { useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
-import ChatRoom from '../components/ChatRoom';
-import ChatInput from '../components/ChatInput';
-import { selectUser } from '../redux/selector';  // Assuming you have a selector to get the user
+import React, { useState } from 'react';
+import Sidebar from '../components/Sidebar/Sidebar';
+import ChatWindow from '../components/Chat/ChatWindow';
 
 const ChatPage = () => {
-  const user = useSelector(selectUser);  // Get user from Redux store
-  const navigate = useNavigate();
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  useEffect(() => {
-    if (!user) {
-      navigate('/');  // Redirect to login if no user is found
-    }
-  }, [user, navigate]);
+  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
+
+  const handleUserSelect = (user) => {
+    setSelectedUser(user);
+    setIsSidebarOpen(false); 
+  };
 
   return (
-    !user ? (
-      // If no user, return null to prevent rendering
-      null
-    ) : (
-      // If user exists, render the chat components
-      <div className="chat-page p-6 space-y-4">
-        <h1 className="text-2xl font-bold text-center">Chat</h1>
-        <ChatRoom />
-        <ChatInput />
+    <div className="flex h-screen overflow-hidden">
+      {/* Sidebar */}
+      <div
+        className={`bg-gray-100 border-r z-50 transition-all duration-300
+          ${isSidebarOpen ? 'block fixed inset-y-0 left-0 w-72' : 'hidden'}
+          lg:relative lg:block lg:w-72`}
+      >
+        <Sidebar onUserSelect={handleUserSelect} />
       </div>
-    )
+
+      {/* Mobile Hamburger */}
+      <div className="lg:hidden fixed top-0 left-0 z-50 p-0 m-0">
+        <button onClick={toggleSidebar} className="text-gray-700 focus:outline-none">
+          <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+      </div>
+
+      {/* Chat Window */}
+      <div className="flex-1 flex flex-col pt-16 lg:pt-0 overflow-y-auto bg-white">
+        {selectedUser ? (
+          <ChatWindow selectedUser={selectedUser} />
+        ) : (
+          <div className="flex-1 flex items-center justify-center text-gray-500 text-lg">
+            Select a user to start a conversation
+          </div>
+        )}
+      </div>
+
+      {/* Mobile Overlay */}
+      <div
+        className={`fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity duration-300 ${isSidebarOpen ? 'block lg:hidden' : 'hidden'}`}
+        onClick={toggleSidebar}
+      ></div>
+    </div>
   );
 };
 
